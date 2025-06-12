@@ -1,16 +1,16 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import axios from 'axios';
+import config from '@/config/config';
 
 interface User {
   id: string;
-  email: string;
-  name: string;
+  username: string;
 }
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (name: string, email: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -23,36 +23,36 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock successful login
-    if (email && password) {
-      setUser({
-        id: '1',
-        email,
-        name: email.split('@')[0],
-      });
-      return true;
-    }
-    return false;
-  };
+  const login = async (
+    username: string,
+    password: string
+  ): Promise<boolean> => {
+    // await new Promise(resolve => setTimeout(resolve, 1000));
 
-  const signup = async (name: string, email: string, password: string): Promise<boolean> => {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock successful signup
-    if (name && email && password) {
+    // if (username && password) {
+    //   setUser({
+    //     id: '1',
+    //     username,
+    //   });
+    //   return true;
+    // }
+    // return false;
+
+    try {
+      const response = await axios.post(`${config.BASE_ROUTE}/login`, {
+        username,
+        password,
+      });
       setUser({
         id: '1',
-        email,
-        name,
+        username,
       });
+      console.log('login response successfull', response.data);
       return true;
+    } catch (error) {
+      console.error('login error', error);
+      return false;
     }
-    return false;
   };
 
   const logout = () => {
@@ -65,7 +65,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         user,
         isAuthenticated: !!user,
         login,
-        signup,
         logout,
       }}
     >

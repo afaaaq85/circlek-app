@@ -2,11 +2,22 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFonts } from 'expo-font';
 
 export default function SplashScreen() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
 
+   const [fontsLoaded] = useFonts({
+    'GothamLight': require('@/assets/fonts/gothamssm_light.otf'),
+    'GothamMedium': require('@/assets/fonts/gothamssm_medium.otf'),
+    'GothamBold': require('@/assets/fonts/gothamssm_bold.otf'),
+    'GothamBlack': require('@/assets/fonts/gothamssm_black.otf'),
+  });
+
+  // if (!fontsLoaded) {
+  //   return null; // or a loading spinner
+  // }
   useEffect(() => {
     const timer = setTimeout(() => {
       if (isAuthenticated) {

@@ -9,28 +9,30 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { User, Lock, Eye, EyeOff } from 'lucide-react-native';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{
+    username?: string;
+    password?: string;
+  }>({});
 
   const { login } = useAuth();
   const router = useRouter();
 
   const validateForm = () => {
-    const newErrors: { email?: string; password?: string } = {};
+    const newErrors: { username?: string; password?: string } = {};
 
-    if (!email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(email)) {
-      newErrors.email = 'Please enter a valid email';
+    if (!username) {
+      newErrors.username = 'Username is required';
     }
 
     if (!password) {
@@ -48,11 +50,11 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const success = await login(email, password);
+      const success = await login(username, password);
       if (success) {
         router.replace('/(tabs)');
       } else {
-        Alert.alert('Error', 'Invalid email or password');
+        Alert.alert('Error', 'Invalid username or password');
       }
     } catch (error) {
       Alert.alert('Error', 'An error occurred during login');
@@ -62,80 +64,99 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
-        <View style={styles.header}>
-          <View style={styles.logo}>
-            <Text style={styles.logoText}>App</Text>
-          </View>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to your account</Text>
+        <View style={{ width: 200, overflow: 'hidden' }}>
+          <Image
+            source={require('@/assets/images/circlek.png')}
+            style={{ width: 200, height: 80 }}
+            resizeMode="contain"
+          />
         </View>
-
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <View style={styles.inputWrapper}>
-              <Mail size={20} color="#6b7280" style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, errors.email && styles.inputError]}
-                placeholder="Email address"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-              />
+        <Text style={{marginBottom:32,fontSize:16,letterSpacing:-1, fontFamily:"GothamLight"}}>Streamlining Property Insights</Text>
+        <View
+          style={{
+            width: '100%',
+          }}
+        >
+          <View style={styles.formCard}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Welcome Back</Text>
+              <Text style={styles.subtitle}>Sign in to your account</Text>
             </View>
-            {errors.email && <Text style={styles.errorText}>{errors.email}</Text>}
-          </View>
+            <View style={styles.form}>
+              <View style={styles.inputContainer}>
+                <View style={styles.inputWrapper}>
+                  <User size={22} color="#6b7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, errors.username && styles.inputError]}
+                    placeholder="Username"
+                    value={username}
+                    onChangeText={setUsername}
+                    keyboardType="default"
+                    autoCapitalize="none"
+                    autoComplete="username"
+                  />
+                </View>
+                {errors.username && (
+                  <Text style={styles.errorText}>{errors.username}</Text>
+                )}
+              </View>
 
-          <View style={styles.inputContainer}>
-            <View style={styles.inputWrapper}>
-              <Lock size={20} color="#6b7280" style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, errors.password && styles.inputError]}
-                placeholder="Password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                autoComplete="password"
-              />
+              <View style={styles.inputContainer}>
+                <View style={styles.inputWrapper}>
+                  <Lock size={20} color="#6b7280" style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, errors.password && styles.inputError]}
+                    placeholder="Password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    autoComplete="password"
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeIcon}
+                    onPress={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff size={20} color="#6b7280" />
+                    ) : (
+                      <Eye size={20} color="#6b7280" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+                {errors.password && (
+                  <Text style={styles.errorText}>{errors.password}</Text>
+                )}
+              </View>
+
               <TouchableOpacity
-                style={styles.eyeIcon}
-                onPress={() => setShowPassword(!showPassword)}
+                style={[
+                  styles.loginButton,
+                  loading && styles.loginButtonDisabled,
+                ]}
+                onPress={handleLogin}
+                disabled={loading}
               >
-                {showPassword ? (
-                  <EyeOff size={20} color="#6b7280" />
+                {loading ? (
+                  <ActivityIndicator color="#ffffff" />
                 ) : (
-                  <Eye size={20} color="#6b7280" />
+                  <Text style={styles.loginButtonText}>Login</Text>
                 )}
               </TouchableOpacity>
-            </View>
-            {errors.password && <Text style={styles.errorText}>{errors.password}</Text>}
-          </View>
 
-          <TouchableOpacity
-            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <Text style={styles.loginButtonText}>Sign In</Text>
-            )}
-          </TouchableOpacity>
-
-          <View style={styles.signupContainer}>
+              {/* <View style={styles.signupContainer}>
             <Text style={styles.signupText}>Don't have an account? </Text>
             <Link href="/(auth)/signup" asChild>
               <TouchableOpacity>
                 <Text style={styles.signupLink}>Sign up</Text>
               </TouchableOpacity>
             </Link>
+          </View> */}
+            </View>
           </View>
         </View>
       </View>
@@ -150,36 +171,34 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 24,
+    padding: 16,
+    height: '100%',
+    alignItems: 'center',
     justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
     marginBottom: 48,
   },
-  logo: {
-    width: 60,
-    height: 60,
-    backgroundColor: '#DC2626',
-    borderRadius: 15,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  logoText: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
+
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
     color: '#1f2937',
     marginBottom: 8,
+    fontFamily: 'GothamBold',
+    letterSpacing: -1,
   },
   subtitle: {
     fontSize: 16,
     color: '#6b7280',
+    fontFamily: 'GothamLight',
+    letterSpacing: 0,
+  },
+  formCard:{
+    // backgroundColor:"#e3e3e3",
+    borderRadius:12,
+    padding:12,
+    paddingVertical:24
   },
   form: {
     width: '100%',
@@ -202,8 +221,9 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 56,
     paddingHorizontal: 16,
-    fontSize: 16,
+    fontSize: 14,
     color: '#1f2937',
+    fontFamily: 'GothamLight',
   },
   inputError: {
     borderColor: '#DC2626',
@@ -224,7 +244,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 8,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   loginButtonDisabled: {
     opacity: 0.7,
@@ -233,6 +253,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: 'GothamMedium',
   },
   signupContainer: {
     flexDirection: 'row',

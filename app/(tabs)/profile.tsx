@@ -46,8 +46,7 @@ export default function ProfileScreen() {
           <View style={styles.avatar}>
             <User size={32} color="#ffffff" />
           </View>
-          <Text style={styles.name}>{user?.name}</Text>
-          <Text style={styles.email}>{user?.email}</Text>
+          <Text style={styles.email}>{user?.username}</Text>
         </View>
       </View>
 
