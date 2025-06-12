@@ -113,6 +113,7 @@ export default function LoginScreen() {
                     style={[styles.input, errors.password && styles.inputError]}
                     placeholder="Password"
                     value={password}
+                    autoCapitalize='none'
                     onChangeText={setPassword}
                     secureTextEntry={!showPassword}
                     autoComplete="password"

@@ -5,6 +5,7 @@ import config from '@/config/config';
 interface User {
   id: string;
   username: string;
+  role: string;
 }
 
 interface AuthContextType {
@@ -43,9 +44,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
         username,
         password,
       });
+      let userRole = '';
+      if (response.data.username === 'super1') {
+        userRole = 'superadmin';
+      } else if (response.data.username === 'agent1') {
+        userRole = 'agent';
+      } else if (response.data.username === 'admin1') {
+        userRole = 'admin';
+      } else {
+        userRole = 'viewer';
+      }
+
       setUser({
         id: '1',
         username,
+        role: userRole,
       });
       console.log('login response successfull', response.data);
       return true;

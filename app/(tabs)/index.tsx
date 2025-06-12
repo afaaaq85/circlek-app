@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -8,177 +8,30 @@ import {
   ScrollView,
   Alert,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import { FileText, Send, Calendar, MapPin, Phone, Mail, Fuel, Database, Settings, ChartBar as BarChart3, ArrowLeft } from 'lucide-react-native';
+import { superadminOptions,adminOptions,agentOptions,viewerOptions } from '@/data/roleBasedOptions';
 import PipelineForm from '@/components/PipelineForm';
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({
-    pipelineName: '',
-    fuelType: '',
-    capacity: '',
-    pressure: '',
-    temperature: '',
-    flowRate: '',
-    location: '',
-    operatorName: '',
-    phone: '',
-    email: '',
-    date: '',
-    notes: '',
-  });
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const gridOptions = [
-    {
-      id: 1,
-      title: 'Add Pipeline Data',
-      subtitle: 'Enter fuel pump pipeline information',
-      icon: Fuel,
-      enabled: true,
-      color: '#DC2626',
-    },
-    {
-      id: 2,
-      title: 'Data Analytics',
-      subtitle: 'View pipeline performance metrics',
-      icon: BarChart3,
-      enabled: false,
-      color: '#9CA3AF',
-    },
-    {
-      id: 3,
-      title: 'System Settings',
-      subtitle: 'Configure pipeline parameters',
-      icon: Settings,
-      enabled: false,
-      color: '#9CA3AF',
-    },
-    {
-      id: 4,
-      title: 'Database Management',
-      subtitle: 'Manage stored pipeline records',
-      icon: Database,
-      enabled: false,
-      color: '#9CA3AF',
-    },
-  ];
-
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.pipelineName.trim()) {
-      newErrors.pipelineName = 'Pipeline name is required';
+  const gridOptions = useMemo(() => {
+    switch (user?.role) {
+      case 'superadmin':
+        return superadminOptions;
+      case 'admin':
+        return adminOptions;
+      case 'agent':
+        return agentOptions;
+      case 'viewer':
+        return viewerOptions;
+      default:
+        return [];
     }
-
-    if (!formData.fuelType.trim()) {
-      newErrors.fuelType = 'Fuel type is required';
-    }
-
-    if (!formData.capacity.trim()) {
-      newErrors.capacity = 'Capacity is required';
-    } else if (isNaN(Number(formData.capacity))) {
-      newErrors.capacity = 'Capacity must be a number';
-    }
-
-    if (!formData.pressure.trim()) {
-      newErrors.pressure = 'Pressure is required';
-    } else if (isNaN(Number(formData.pressure))) {
-      newErrors.pressure = 'Pressure must be a number';
-    }
-
-    if (!formData.temperature.trim()) {
-      newErrors.temperature = 'Temperature is required';
-    } else if (isNaN(Number(formData.temperature))) {
-      newErrors.temperature = 'Temperature must be a number';
-    }
-
-    if (!formData.flowRate.trim()) {
-      newErrors.flowRate = 'Flow rate is required';
-    } else if (isNaN(Number(formData.flowRate))) {
-      newErrors.flowRate = 'Flow rate must be a number';
-    }
-
-    if (!formData.location.trim()) {
-      newErrors.location = 'Location is required';
-    }
-
-    if (!formData.operatorName.trim()) {
-      newErrors.operatorName = 'Operator name is required';
-    }
-
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (!/^\+?[\d\s-()]+$/.test(formData.phone)) {
-      newErrors.phone = 'Please enter a valid phone number';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-
-    if (!formData.date.trim()) {
-      newErrors.date = 'Date is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
-
-    setLoading(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      Alert.alert(
-        'Success',
-        'Pipeline data submitted successfully!',
-        [
-          {
-            text: 'OK',
-            onPress: () => {
-              setFormData({
-                pipelineName: '',
-                fuelType: '',
-                capacity: '',
-                pressure: '',
-                temperature: '',
-                flowRate: '',
-                location: '',
-                operatorName: '',
-                phone: '',
-                email: '',
-                date: '',
-                notes: '',
-              });
-              setErrors({});
-              setShowForm(false);
-            }
-          }
-        ]
-      );
-    } catch (error) {
-      Alert.alert('Error', 'Failed to submit pipeline data. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateFormData = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    }
-  };
+  }, [user?.role]);
 
   const handleOptionPress = (option: any) => {
     if (!option.enabled) {
@@ -186,62 +39,69 @@ export default function HomeScreen() {
       return;
     }
 
-    if (option.id === 1) {
-      setShowForm(true);
+    switch (option.id) {
+      case 1:
+        // All roles: show form
+        setShowForm(true);
+        break;
+      case 2:
+        // Example: Navigate or handle for other feature
+        Alert.alert('Feature Clicked', `${option.title} tapped.`);
+        break;
+      case 3:
+        // Add more logic here as needed
+        Alert.alert('Feature Clicked', `${option.title} tapped.`);
+        break;
+      default:
+        Alert.alert('Feature Clicked', `${option.title} tapped.`);
     }
   };
 
   if (showForm) {
-    return (
-     <PipelineForm setShowForm={setShowForm}/>
-    );
+    return <PipelineForm setShowForm={setShowForm} />;
   }
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-     {/* <View>
-      <Image source={require('@/assets/images/circlek.png')} />
-     </View> */}
       <View style={styles.header}>
+        <View style={{ width: '100%', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+          <Image
+            source={require('@/assets/images/circlek.png')}
+            style={{ width: 200, height: 80 }}
+            resizeMode="contain"
+          />
+        </View>
         <Text style={styles.greeting}>Hello, {user?.username}!</Text>
         <Text style={styles.subGreeting}>Manage your pipeline operations</Text>
       </View>
 
       <View style={styles.gridContainer}>
         <Text style={styles.sectionTitle}>Pipeline Management System</Text>
-        
+
         <View style={styles.grid}>
           {gridOptions.map((option) => {
             const IconComponent = option.icon;
             return (
               <TouchableOpacity
                 key={option.id}
-                style={[
-                  styles.gridCard,
-                  !option.enabled && styles.gridCardDisabled
-                ]}
+                style={[styles.gridCard, !option.enabled && styles.gridCardDisabled]}
                 onPress={() => handleOptionPress(option)}
                 disabled={!option.enabled}
               >
-                <View style={[
-                  styles.iconContainer,
-                  { backgroundColor: option.enabled ? `${option.color}15` : '#F3F4F6' }
-                ]}>
-                  <IconComponent 
-                    size={32} 
-                    color={option.color}
-                  />
+                <View
+                  style={[
+                    styles.iconContainer,
+                    {
+                      backgroundColor: option.enabled ? `${option.color}15` : '#F3F4F6',
+                    },
+                  ]}
+                >
+                  <IconComponent size={32} color={option.color} />
                 </View>
-                <Text style={[
-                  styles.cardTitle,
-                  !option.enabled && styles.cardTitleDisabled
-                ]}>
+                <Text style={[styles.cardTitle, !option.enabled && styles.cardTitleDisabled]}>
                   {option.title}
                 </Text>
-                <Text style={[
-                  styles.cardSubtitle,
-                  !option.enabled && styles.cardSubtitleDisabled
-                ]}>
+                <Text style={[styles.cardSubtitle, !option.enabled && styles.cardSubtitleDisabled]}>
                   {option.subtitle}
                 </Text>
                 {!option.enabled && (
@@ -265,30 +125,30 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 24,
-    paddingTop: 60,
+    paddingTop: 30,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
   greeting: {
-    fontSize: 28,
+    fontSize: 22,
     color: '#1f2937',
     marginBottom: 4,
-    fontFamily:"GothamBlack"
+    fontFamily: 'GothamBlack',
   },
   subGreeting: {
     fontSize: 16,
     color: '#6b7280',
-    fontFamily:"GothamMedium",
-    letterSpacing:0
+    fontFamily: 'GothamMedium',
+    letterSpacing: 0,
   },
   gridContainer: {
     padding: 24,
   },
   sectionTitle: {
     fontSize: 20,
-    fontFamily:"GothamBold",
-    letterSpacing:-1,
+    fontFamily: 'GothamBold',
+    letterSpacing: -1,
     color: '#1f2937',
     marginBottom: 24,
     textAlign: 'center',
@@ -302,7 +162,7 @@ const styles = StyleSheet.create({
     width: '48%',
     backgroundColor: '#ffffff',
     borderRadius: 16,
-    padding: 20,
+    padding: 16,
     marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: {
@@ -328,9 +188,10 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    letterSpacing: -1,
     color: '#1f2937',
     marginBottom: 8,
+    fontFamily:"GothamBold",
   },
   cardTitleDisabled: {
     color: '#9CA3AF',
@@ -338,6 +199,8 @@ const styles = StyleSheet.create({
   cardSubtitle: {
     fontSize: 14,
     color: '#6b7280',
+    fontFamily:"GothamMedium",
+    letterSpacing:-1,
     lineHeight: 20,
   },
   cardSubtitleDisabled: {
