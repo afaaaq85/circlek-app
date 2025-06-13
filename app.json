@@ -26,6 +26,12 @@
     },
     "android": {
       "package": "com.anonymous.circlekapp"
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "56d75b05-d947-4bdd-987c-25f45c276cba"
+      }
     }
   }
 }

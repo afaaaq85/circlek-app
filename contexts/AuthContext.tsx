@@ -40,16 +40,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // return false;
 
     try {
-      const response = await axios.post(`${config.BASE_ROUTE}/login`, {
+      const response = await axios.post(`${config.BASE_ROUTE}/login/`, {
         username,
         password,
       });
       let userRole = '';
-      if (response.data.username === 'super1') {
+      if (response.data.username === 'super') {
         userRole = 'superadmin';
-      } else if (response.data.username === 'agent1') {
+      } else if (response.data.username === 'agent') {
         userRole = 'agent';
-      } else if (response.data.username === 'admin1') {
+      } else if (response.data.username === 'admin') {
         userRole = 'admin';
       } else {
         userRole = 'viewer';

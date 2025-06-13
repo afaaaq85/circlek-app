@@ -11,8 +11,14 @@ import {
   Image,
 } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import { superadminOptions,adminOptions,agentOptions,viewerOptions } from '@/data/roleBasedOptions';
+import {
+  superadminOptions,
+  adminOptions,
+  agentOptions,
+  viewerOptions,
+} from '@/data/roleBasedOptions';
 import PipelineForm from '@/components/PipelineForm';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -35,7 +41,10 @@ export default function HomeScreen() {
 
   const handleOptionPress = (option: any) => {
     if (!option.enabled) {
-      Alert.alert('Coming Soon', `${option.title} feature will be available soon!`);
+      Alert.alert(
+        'Coming Soon',
+        `${option.title} feature will be available soon!`
+      );
       return;
     }
 
@@ -63,17 +72,29 @@ export default function HomeScreen() {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <View style={{ width: '100%', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+      <LinearGradient
+        colors={['#ff2800', '#ff0800', '#eb5406']}
+        style={styles.header}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <View
+          style={{
+            width: '100%',
+            overflow: 'hidden',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
           <Image
-            source={require('@/assets/images/circlek.png')}
+            source={require('@/assets/images/circlek-white.png')}
             style={{ width: 200, height: 80 }}
             resizeMode="contain"
           />
         </View>
         <Text style={styles.greeting}>Hello, {user?.username}!</Text>
         <Text style={styles.subGreeting}>Manage your pipeline operations</Text>
-      </View>
+      </LinearGradient>
 
       <View style={styles.gridContainer}>
         <Text style={styles.sectionTitle}>Pipeline Management System</Text>
@@ -84,7 +105,10 @@ export default function HomeScreen() {
             return (
               <TouchableOpacity
                 key={option.id}
-                style={[styles.gridCard, !option.enabled && styles.gridCardDisabled]}
+                style={[
+                  styles.gridCard,
+                  !option.enabled && styles.gridCardDisabled,
+                ]}
                 onPress={() => handleOptionPress(option)}
                 disabled={!option.enabled}
               >
@@ -92,16 +116,28 @@ export default function HomeScreen() {
                   style={[
                     styles.iconContainer,
                     {
-                      backgroundColor: option.enabled ? `${option.color}15` : '#F3F4F6',
+                      backgroundColor: option.enabled
+                        ? `${option.color}15`
+                        : '#F3F4F6',
                     },
                   ]}
                 >
                   <IconComponent size={32} color={option.color} />
                 </View>
-                <Text style={[styles.cardTitle, !option.enabled && styles.cardTitleDisabled]}>
+                <Text
+                  style={[
+                    styles.cardTitle,
+                    !option.enabled && styles.cardTitleDisabled,
+                  ]}
+                >
                   {option.title}
                 </Text>
-                <Text style={[styles.cardSubtitle, !option.enabled && styles.cardSubtitleDisabled]}>
+                <Text
+                  style={[
+                    styles.cardSubtitle,
+                    !option.enabled && styles.cardSubtitleDisabled,
+                  ]}
+                >
                   {option.subtitle}
                 </Text>
                 {!option.enabled && (
@@ -124,23 +160,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
   },
   header: {
-    padding: 24,
+    padding: 18,
     paddingTop: 30,
+    paddingBottom: 30,
     backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
   greeting: {
-    fontSize: 22,
-    color: '#1f2937',
+    fontSize: 18,
+    color: 'white',
     marginBottom: 4,
     fontFamily: 'GothamBlack',
   },
   subGreeting: {
-    fontSize: 16,
-    color: '#6b7280',
+    fontSize: 14,
+    color: '#e3e3e3',
     fontFamily: 'GothamMedium',
-    letterSpacing: 0,
+    letterSpacing: -1,
   },
   gridContainer: {
     padding: 24,
@@ -151,7 +188,7 @@ const styles = StyleSheet.create({
     letterSpacing: -1,
     color: '#1f2937',
     marginBottom: 24,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   grid: {
     flexDirection: 'row',
@@ -191,7 +228,7 @@ const styles = StyleSheet.create({
     letterSpacing: -1,
     color: '#1f2937',
     marginBottom: 8,
-    fontFamily:"GothamBold",
+    fontFamily: 'GothamBold',
   },
   cardTitleDisabled: {
     color: '#9CA3AF',
@@ -199,8 +236,8 @@ const styles = StyleSheet.create({
   cardSubtitle: {
     fontSize: 14,
     color: '#6b7280',
-    fontFamily:"GothamMedium",
-    letterSpacing:-1,
+    fontFamily: 'GothamMedium',
+    letterSpacing: -1,
     lineHeight: 20,
   },
   cardSubtitleDisabled: {
