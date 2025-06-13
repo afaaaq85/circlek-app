@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet, Image, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFonts } from 'expo-font';
@@ -14,35 +14,6 @@ export default function SplashScreen() {
     'GothamBold': require('@/assets/fonts/gothamssm_bold.otf'),
     'GothamBlack': require('@/assets/fonts/gothamssm_black.otf'),
   });
-
-  // if (!fontsLoaded) {
-  //   return null; // or a loading spinner
-  // }
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (isAuthenticated) {
-        router.replace('/(tabs)');
-      } else {
-        router.replace('/(auth)/getStarted');
-      }
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [isAuthenticated]);
-
-  return (
-    <View style={styles.container}>
-      <View style={styles.logoContainer}>
-        <View style={styles.logo}>
-          <Text style={styles.logoText}>App</Text>
-        </View>
-        <Text style={styles.welcomeText}>Welcome</Text>
-        <Text style={styles.subText}>Pipelines made easy</Text>
-      </View>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -79,3 +50,35 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+  // if (!fontsLoaded) {
+  //   return null; // or a loading spinner
+  // }
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isAuthenticated) {
+        router.replace('/(tabs)');
+      } else {
+        router.replace('/(auth)/getStarted');
+      }
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated]);
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.logoContainer}>
+         <View style={{ width: 200, overflow: 'hidden' }}>
+                  <Image
+                    source={require('@/assets/images/circlek.png')}
+                    style={{ width: 200, height: 80 }}
+                    resizeMode="contain"
+                  />
+                </View>
+        <Text style={styles.welcomeText}>Welcome</Text>
+        <Text style={styles.subText}>Pipelines made easy</Text>
+      </View>
+    </View>
+  );
+}
+

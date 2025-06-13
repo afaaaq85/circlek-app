@@ -26,13 +26,11 @@ export default function HomeScreen() {
 
   const gridOptions = useMemo(() => {
     switch (user?.role) {
-      case 'superadmin':
+      case 'Super Admin':
         return superadminOptions;
-      case 'admin':
-        return adminOptions;
-      case 'agent':
+      case 'Agent':
         return agentOptions;
-      case 'viewer':
+      case 'Viewer':
         return viewerOptions;
       default:
         return [];

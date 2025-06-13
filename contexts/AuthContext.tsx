@@ -28,31 +28,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
     username: string,
     password: string
   ): Promise<boolean> => {
-    // await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // if (username && password) {
-    //   setUser({
-    //     id: '1',
-    //     username,
-    //   });
-    //   return true;
-    // }
-    // return false;
+  
+    const formData = new URLSearchParams();
+    formData.append('username', username);
+    formData.append('password', password);
 
     try {
-      const response = await axios.post(`${config.BASE_ROUTE}/login/`, {
-        username,
-        password,
-      });
+      const response = await axios.post(
+        'https://e13e-2a09-bac5-503c-18c8-00-278-1.ngrok-free.app/login/',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
+      );
+
       let userRole = '';
-      if (response.data.username === 'super') {
-        userRole = 'superadmin';
-      } else if (response.data.username === 'agent') {
-        userRole = 'agent';
-      } else if (response.data.username === 'admin') {
-        userRole = 'admin';
+      if (response.data.role === 'Super Admin') {
+        userRole = 'Super Admin';
+      } else if (response.data.role === 'Agent') {
+        userRole = 'Agent';
       } else {
-        userRole = 'viewer';
+        userRole = 'Viewer';
       }
 
       setUser({
