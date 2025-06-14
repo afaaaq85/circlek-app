@@ -1,21 +1,21 @@
 {
-  "cli": {
-    "version": ">= 16.10.0",
-    "appVersionSource": "remote"
-  },
   "build": {
     "preview": {
       "android": {
         "buildType": "apk"
       }
     },
-    "production": {
+    "preview2": {
       "android": {
-        "buildType": "apk"
+        "gradleCommand": ":app:assembleRelease"
       }
-    }
-  },
-  "submit": {
+    },
+    "preview3": {
+      "developmentClient": true
+    },
+    "preview4": {
+      "distribution": "internal"
+    },
     "production": {}
   }
 }

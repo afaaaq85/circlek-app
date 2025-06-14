@@ -35,7 +35,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     try {
       const response = await axios.post(
-        'https://e13e-2a09-bac5-503c-18c8-00-278-1.ngrok-free.app/login/',
+        `${config.BASE_ROUTE}/login/`,
         formData,
         {
           headers: {
