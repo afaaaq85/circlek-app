@@ -252,8 +252,7 @@ const PipelineForm = ({ setShowForm }: any) => {
         pictures: 'pictures afaq nill now',
         stage: formData.stage,
         initial_comments: formData.initial_comments,
-        approval_status_development_team:
-          formData.approval_status_by_development_team,
+        approval_status_development_team:'processing',
         description: 'no',
         is_active: true,
       };
@@ -289,7 +288,7 @@ const PipelineForm = ({ setShowForm }: any) => {
               pictures: '',
               stage: '',
               initial_comments: '',
-              approval_status_by_development_team: '',
+              approval_status_by_development_team: 'processing',
               description: '',
               is_active: true,
             });
@@ -615,28 +614,6 @@ const PipelineForm = ({ setShowForm }: any) => {
             )}
           </View>
 
-          <View style={[styles.inputContainer, styles.halfWidth]}>
-            <View style={styles.inputWrapper}>
-              <FileText size={20} color="#6b7280" style={styles.inputIcon} />
-              <TextInput
-                style={[
-                  styles.input,
-                  errors.approval_status_by_development_team &&
-                    styles.inputError,
-                ]}
-                placeholder="Approval Status"
-                value={formData.approval_status_by_development_team}
-                onChangeText={(value) =>
-                  updateFormData('approval_status_by_development_team', value)
-                }
-              />
-            </View>
-            {errors.approval_status_by_development_team && (
-              <Text style={styles.errorText}>
-                {errors.approval_status_by_development_team}
-              </Text>
-            )}
-          </View>
         </View>
 
         {/* Initial Comments */}
