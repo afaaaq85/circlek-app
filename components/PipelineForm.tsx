@@ -9,7 +9,7 @@ import {
   StyleSheet,
   Image,
 } from 'react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ArrowLeft,
   BarChart3,
@@ -28,22 +28,27 @@ import {
   Camera,
   Clock,
 } from 'lucide-react-native';
+import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
 import Config from '@/config/config';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 
 const PipelineForm = ({ setShowForm }: any) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [show, setShow] = useState(false);
   const [formData, setFormData] = useState({
     site_name: '',
     city: '',
-    station_land: '',
+    station_land: 'station',
     area: '',
     revenue_type: '',
     location_coordinates: '',
-    date_site_added: '',
+    date_site_added: new Date(),
     site_added_by: '',
     project_type: '',
     real_estate_team: '',
@@ -57,6 +62,7 @@ const PipelineForm = ({ setShowForm }: any) => {
     description: '',
     is_active: true,
   });
+
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -85,12 +91,6 @@ const PipelineForm = ({ setShowForm }: any) => {
       newErrors.location_coordinates = 'Location coordinates are required';
     }
 
-    if (!formData.date_site_added.trim()) {
-      newErrors.date_site_added = 'Date site added is required';
-    } else if (!/^\d{4}-\d{2}-\d{2}$/.test(formData.date_site_added)) {
-      newErrors.date_site_added = 'Date must be in YYYY-MM-DD format';
-    }
-
     if (!formData.site_added_by.trim()) {
       newErrors.site_added_by = 'Site added by is required';
     }
@@ -112,39 +112,6 @@ const PipelineForm = ({ setShowForm }: any) => {
       newErrors.traffic_count_5_min = 'Traffic count must be a positive number';
     }
 
-    // if (!formData.expected_gasoline_sales_liters_day.trim()) {
-    //   newErrors.expected_gasoline_sales_liters_day =
-    //     'Expected gasoline sales is required';
-    // } else if (
-    //   isNaN(Number(formData.expected_gasoline_sales_liters_day)) ||
-    //   Number(formData.expected_gasoline_sales_liters_day) < 0
-    // ) {
-    //   newErrors.expected_gasoline_sales_liters_day =
-    //     'Expected gasoline sales must be a positive number';
-    // }
-
-    // if (!formData.expected_diesel_sales_liters_day2.trim()) {
-    //   newErrors.expected_diesel_sales_liters_day2 =
-    //     'Expected diesel sales is required';
-    // } else if (
-    //   isNaN(Number(formData.expected_diesel_sales_liters_day2)) ||
-    //   Number(formData.expected_diesel_sales_liters_day2) < 0
-    // ) {
-    //   newErrors.expected_diesel_sales_liters_day2 =
-    //     'Expected diesel sales must be a positive number';
-    // }
-
-    // if (!formData.real_estate_revenue_expected_sar_yr.trim()) {
-    //   newErrors.real_estate_revenue_expected_sar_yr =
-    //     'Real estate revenue is required';
-    // } else if (
-    //   isNaN(Number(formData.real_estate_revenue_expected_sar_yr)) ||
-    //   Number(formData.real_estate_revenue_expected_sar_yr) < 0
-    // ) {
-    //   newErrors.real_estate_revenue_expected_sar_yr =
-    //     'Real estate revenue must be a positive number';
-    // }
-
     if (!formData.rental_demand.trim()) {
       newErrors.rental_demand = 'Rental demand is required';
     }
@@ -162,13 +129,18 @@ const PipelineForm = ({ setShowForm }: any) => {
       newErrors.stage = 'Stage is required';
     }
 
-    if (!formData.approval_status_by_development_team.trim()) {
-      newErrors.approval_status_by_development_team =
-        'Approval status is required';
-    }
-
     setErrors(newErrors);
+   
     return Object.keys(newErrors).length === 0;
+  };
+
+  const onChangeDate = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    setShow(false);
+    if (selectedDate) {
+      const formattedDate = selectedDate.toISOString().split('T')[0];
+      console.log('Selected date:', formattedDate);
+      updateFormData('date_site_added', formattedDate);
+    }
   };
 
   const handleSelectPicture = async () => {
@@ -225,13 +197,14 @@ const PipelineForm = ({ setShowForm }: any) => {
   };
 
   const handleSubmit = async () => {
+   
     if (!validateForm()) return;
-
+    
     setLoading(true);
     try {
       // Prepare the payload with correct data types
       const payload = {
-        sr: '9',
+        sr: `${Math.floor(1000 + Math.random() * 9000)}`,
         site_name: formData.site_name,
         city: formData.city,
         station_or_land: formData.station_land,
@@ -252,18 +225,19 @@ const PipelineForm = ({ setShowForm }: any) => {
         pictures: 'pictures afaq nill now',
         stage: formData.stage,
         initial_comments: formData.initial_comments,
-        approval_status_development_team:'processing',
+        approval_status_development_team: 'processing',
         description: 'no',
         is_active: true,
       };
 
       const response = await axios.post(
         `${Config.BASE_ROUTE}/pipelines/`,
-        payload,{
-          headers:{
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
+        payload,
+        {
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
         }
       );
       console.log('pipeline data submitted:', response.data);
@@ -278,7 +252,7 @@ const PipelineForm = ({ setShowForm }: any) => {
               area: '',
               revenue_type: '',
               location_coordinates: '',
-              date_site_added: '',
+              date_site_added: new Date(),
               site_added_by: '',
               project_type: '',
               real_estate_team: '',
@@ -297,9 +271,9 @@ const PipelineForm = ({ setShowForm }: any) => {
           },
         },
       ]);
-    } catch (error) {
+    } catch (error: any) {
       console.log('error', error.response.data);
-      Alert.alert('Error', 'Failed to submit site data. Please try again.');
+      Alert.alert('Failed to submit site data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -363,7 +337,7 @@ const PipelineForm = ({ setShowForm }: any) => {
               <MapPin size={20} color="#6b7280" style={styles.inputIcon} />
               <TextInput
                 style={[styles.input, errors.area && styles.inputError]}
-                placeholder="Area"
+                placeholder="Total Area"
                 value={formData.area}
                 onChangeText={(value) => updateFormData('area', value)}
               />
@@ -373,24 +347,86 @@ const PipelineForm = ({ setShowForm }: any) => {
         </View>
 
         {/* Station Land */}
-        <View style={styles.inputContainer}>
-          <View style={styles.inputWrapper}>
-            <Database size={20} color="#6b7280" style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, errors.station_land && styles.inputError]}
-              placeholder="Station Land"
-              value={formData.station_land}
-              onChangeText={(value) => updateFormData('station_land', value)}
-            />
-          </View>
-          {errors.station_land && (
-            <Text style={styles.errorText}>{errors.station_land}</Text>
-          )}
-        </View>
+        <Text style={{ color: '#6b7280', fontSize: 14, marginBottom: 6 }}>
+          Station/Land
+        </Text>
 
-        {/* Revenue Type and Location Coordinates Row */}
+        <View
+          style={{
+            borderRadius: 10,
+            paddingLeft: 10,
+            borderWidth: 1,
+            borderColor: '#bdc3c7',
+            overflow: 'hidden',
+            marginBottom: 12,
+            backgroundColor: 'white',
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: 1,
+            },
+            shadowOpacity: 0.05,
+            shadowRadius: 2,
+            elevation: 1,
+          }}
+        >
+          <Picker
+            selectedValue={'station'}
+            style={{ color: '#6b7280' }}
+            onValueChange={(value) => updateFormData('station_land', value)}
+            mode="dropdown"
+          >
+            <Picker.Item label="Station" value="station" />
+            <Picker.Item label="Land" value="land" />
+            <Picker.Item label="Commercial" value="commercial" />
+            <Picker.Item label="Residential" value="residential" />
+          </Picker>
+        </View>
+        {errors.station_land && (
+          <Text style={styles.errorText}>{errors.station_land}</Text>
+        )}
+
+        {/* Revenue Type */}
+        <Text style={{ color: '#6b7280', fontSize: 14, marginBottom: 6 }}>
+          Revenue type
+        </Text>
+        <View
+          style={{
+            borderRadius: 10,
+            paddingLeft: 10,
+            borderWidth: 1,
+            borderColor: '#bdc3c7',
+            overflow: 'hidden',
+            marginBottom: 12,
+            backgroundColor: 'white',
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: 1,
+            },
+            shadowOpacity: 0.05,
+            shadowRadius: 2,
+            elevation: 1,
+          }}
+        >
+          <Picker
+            mode="dropdown"
+            style={{ color: '#6b7280' }}
+            placeholder="Revenue Type"
+            selectedValue="fuelonly"
+            onValueChange={(value) => updateFormData('revenue_type', value)}
+          >
+            <Picker.Item label="Fuel Only" value="fuelonly" />
+            <Picker.Item label="Fuel + Retail" value="fuelretail" />
+            <Picker.Item label="Retail Only" value="retailonly" />
+          </Picker>
+        </View>
+        {errors.revenue_type && (
+          <Text style={styles.errorText}>{errors.revenue_type}</Text>
+        )}
+
         <View style={styles.row}>
-          <View style={[styles.inputContainer, styles.halfWidth]}>
+          {/* <View style={[styles.inputContainer, styles.halfWidth]}>
             <View style={styles.inputWrapper}>
               <DollarSign size={20} color="#6b7280" style={styles.inputIcon} />
               <TextInput
@@ -403,7 +439,7 @@ const PipelineForm = ({ setShowForm }: any) => {
             {errors.revenue_type && (
               <Text style={styles.errorText}>{errors.revenue_type}</Text>
             )}
-          </View>
+          </View> */}
 
           <View style={[styles.inputContainer, styles.halfWidth]}>
             <View style={styles.inputWrapper}>
@@ -426,6 +462,20 @@ const PipelineForm = ({ setShowForm }: any) => {
               </Text>
             )}
           </View>
+          <View style={[styles.inputContainer, styles.halfWidth]}>
+            <View style={styles.inputWrapper}>
+              <Settings size={20} color="#6b7280" style={styles.inputIcon} />
+              <TextInput
+                style={[styles.input, errors.stage && styles.inputError]}
+                placeholder="Stage"
+                value={formData.stage}
+                onChangeText={(value) => updateFormData('stage', value)}
+              />
+            </View>
+            {errors.stage && (
+              <Text style={styles.errorText}>{errors.stage}</Text>
+            )}
+          </View>
         </View>
 
         {/* Date and Site Added By Row */}
@@ -433,22 +483,43 @@ const PipelineForm = ({ setShowForm }: any) => {
           <View style={[styles.inputContainer, styles.halfWidth]}>
             <View style={styles.inputWrapper}>
               <Calendar size={20} color="#6b7280" style={styles.inputIcon} />
-              <TextInput
+              <TouchableOpacity
+                onPress={() => {
+                  setShow(true);
+                }}
                 style={[
                   styles.input,
                   errors.date_site_added && styles.inputError,
+                  { justifyContent: 'center' },
                 ]}
-                placeholder="Date Added (YYYY-MM-DD)"
-                value={formData.date_site_added}
-                onChangeText={(value) =>
-                  updateFormData('date_site_added', value)
-                }
-              />
+              >
+                <Text
+                  style={{
+                    color: formData.date_site_added ? '#6b7280' : '#6b7280',
+                  }}
+                >
+                  {formData.date_site_added.toString() || 'Date Added'}
+                </Text>
+              </TouchableOpacity>
             </View>
             {errors.date_site_added && (
               <Text style={styles.errorText}>{errors.date_site_added}</Text>
             )}
           </View>
+
+          {show && (
+            <DateTimePicker
+              testID="dateTimePicker"
+              value={
+                formData.date_site_added
+                  ? new Date(formData.date_site_added)
+                  : new Date()
+              }
+              mode="date"
+              is24Hour={true}
+              onChange={onChangeDate}
+            />
+          )}
 
           <View style={[styles.inputContainer, styles.halfWidth]}>
             <View style={styles.inputWrapper}>
@@ -468,24 +539,47 @@ const PipelineForm = ({ setShowForm }: any) => {
             )}
           </View>
         </View>
+        <Text style={{ color: '#6b7280', fontSize: 14, marginBottom: 6 }}>
+          Project type
+        </Text>
+        <View
+          style={{
+            borderRadius: 10,
+            paddingLeft: 10,
+            borderWidth: 1,
+            borderColor: '#bdc3c7',
+            overflow: 'hidden',
+            marginBottom: 12,
+            backgroundColor: 'white',
+            shadowColor: '#000',
+            shadowOffset: {
+              width: 0,
+              height: 1,
+            },
+            shadowOpacity: 0.05,
+            shadowRadius: 2,
+            elevation: 1,
+          }}
+        >
+          <Picker
+            mode="dropdown"
+            style={{ color: '#6b7280' }}
+            placeholder="Project Type"
+            selectedValue='Branding_Only'
+            onValueChange={(value) => updateFormData('project_type', value)}
+          >
+            <Picker.Item label="Branding Only" value="Branding_Only" />
+            <Picker.Item label="New Construction" value="New_Construction" />
+            <Picker.Item label="Renovation" value="Renovation" />
+            <Picker.Item label="Acquisition" value="Acquisition" />
+          </Picker>
+        </View>
+        {errors.project_type && (
+          <Text style={styles.errorText}>{errors.project_type}</Text>
+        )}
 
         {/* Project Type and Real Estate Team Row */}
         <View style={styles.row}>
-          <View style={[styles.inputContainer, styles.halfWidth]}>
-            <View style={styles.inputWrapper}>
-              <FileText size={20} color="#6b7280" style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, errors.project_type && styles.inputError]}
-                placeholder="Project Type"
-                value={formData.project_type}
-                onChangeText={(value) => updateFormData('project_type', value)}
-              />
-            </View>
-            {errors.project_type && (
-              <Text style={styles.errorText}>{errors.project_type}</Text>
-            )}
-          </View>
-
           <View style={[styles.inputContainer, styles.halfWidth]}>
             <View style={styles.inputWrapper}>
               <Users size={20} color="#6b7280" style={styles.inputIcon} />
@@ -494,7 +588,7 @@ const PipelineForm = ({ setShowForm }: any) => {
                   styles.input,
                   errors.real_estate_team && styles.inputError,
                 ]}
-                placeholder="Real Estate Team"
+                placeholder="Team"
                 value={formData.real_estate_team}
                 onChangeText={(value) =>
                   updateFormData('real_estate_team', value)
@@ -581,10 +675,27 @@ const PipelineForm = ({ setShowForm }: any) => {
         <View style={styles.inputContainer}>
           <TouchableOpacity
             onPress={handleSelectPicture}
-            style={styles.inputWrapper}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+              backgroundColor: '#fff',
+              padding: 16,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: '#e5e7eb',
+              shadowColor: '#000',
+              shadowOffset: {
+                width: 0,
+                height: 1,
+              },
+              shadowOpacity: 0.05,
+              shadowRadius: 2,
+              elevation: 1,
+            }}
           >
-            <Camera size={20} color="#6b7280" style={styles.inputIcon} />
-            <Text style={styles.input}>
+            <Camera size={20} color="#6b7280" />
+            <Text style={{ color: '#6b7280', fontSize: 16 }}>
               {formData.pictures ? 'Picture Selected' : 'Add Picture'}
             </Text>
           </TouchableOpacity>
@@ -595,25 +706,6 @@ const PipelineForm = ({ setShowForm }: any) => {
               style={{ width: 100, height: 100, marginTop: 10 }}
             />
           ) : null}
-        </View>
-
-        {/* Stage and Approval Status Row */}
-        <View style={styles.row}>
-          <View style={[styles.inputContainer, styles.halfWidth]}>
-            <View style={styles.inputWrapper}>
-              <Settings size={20} color="#6b7280" style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, errors.stage && styles.inputError]}
-                placeholder="Stage"
-                value={formData.stage}
-                onChangeText={(value) => updateFormData('stage', value)}
-              />
-            </View>
-            {errors.stage && (
-              <Text style={styles.errorText}>{errors.stage}</Text>
-            )}
-          </View>
-
         </View>
 
         {/* Initial Comments */}
@@ -812,6 +904,7 @@ const styles = StyleSheet.create({
     height: 56,
     paddingHorizontal: 16,
     fontSize: 16,
+    alignItems: 'center',
     color: '#1f2937',
   },
   textArea: {

@@ -22,7 +22,14 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(
+    {
+        id: '1',
+        username: 'agen',
+        role: 'agent',
+      }
+  );
+  // const [user, setUser] = useState<User | null>(null);
 
   const login = async (
     username: string,

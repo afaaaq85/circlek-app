@@ -1,6 +1,6 @@
 const Config = {
   BASE_ROUTE:
-    "https://0a7f-2a09-bac1-5b20-20-00-3c2-5.ngrok-free.app",
+    "https://b45e-2407-d000-1a-7ced-a50d-7c4f-c745-b5d4.ngrok-free.app",
 };
 
 export default Config;
