@@ -27,6 +27,7 @@ import {
   Users,
   Camera,
   Clock,
+  FileDigit,
 } from 'lucide-react-native';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
@@ -42,6 +43,7 @@ const PipelineForm = ({ setShowForm }: any) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [show, setShow] = useState(false);
   const [formData, setFormData] = useState({
+    sr_no: '',
     site_name: '',
     city: '',
     station_land: 'station',
@@ -63,10 +65,12 @@ const PipelineForm = ({ setShowForm }: any) => {
     is_active: true,
   });
 
-
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
+    if (!formData.sr_no.trim()) {
+      newErrors.sr_no = 'Sr No is required';
+    }
     if (!formData.site_name.trim()) {
       newErrors.site_name = 'Site name is required';
     }
@@ -130,7 +134,7 @@ const PipelineForm = ({ setShowForm }: any) => {
     }
 
     setErrors(newErrors);
-   
+
     return Object.keys(newErrors).length === 0;
   };
 
@@ -197,14 +201,13 @@ const PipelineForm = ({ setShowForm }: any) => {
   };
 
   const handleSubmit = async () => {
-   
     if (!validateForm()) return;
-    
+
     setLoading(true);
     try {
       // Prepare the payload with correct data types
       const payload = {
-        sr: `${Math.floor(1000 + Math.random() * 9000)}`,
+        sr: formData.sr_no,
         site_name: formData.site_name,
         city: formData.city,
         station_or_land: formData.station_land,
@@ -246,6 +249,7 @@ const PipelineForm = ({ setShowForm }: any) => {
           text: 'OK',
           onPress: () => {
             setFormData({
+              sr_no:'',
               site_name: '',
               city: '',
               station_land: '',
@@ -301,20 +305,37 @@ const PipelineForm = ({ setShowForm }: any) => {
       <View style={styles.form}>
         <Text style={styles.formTitle}>Fuel Station Site Information</Text>
 
-        {/* Site Name */}
-        <View style={styles.inputContainer}>
-          <View style={styles.inputWrapper}>
-            <Building size={20} color="#6b7280" style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, errors.site_name && styles.inputError]}
-              placeholder="Site Name"
-              value={formData.site_name}
-              onChangeText={(value) => updateFormData('site_name', value)}
-            />
+        <View style={styles.row}>
+          {/* SR */}
+          <View style={[styles.inputContainer, styles.halfWidth]}>
+            <View style={styles.inputWrapper}>
+              <FileDigit size={20} color="#6b7280" style={styles.inputIcon} />
+              <TextInput
+                style={[styles.input, errors.site_name && styles.inputError]}
+                placeholder="Sr No"
+                value={formData.sr_no}
+                onChangeText={(value) => updateFormData('sr_no', value)}
+              />
+            </View>
+            {errors.site_name && (
+              <Text style={styles.errorText}>{errors.site_name}</Text>
+            )}
           </View>
-          {errors.site_name && (
-            <Text style={styles.errorText}>{errors.site_name}</Text>
-          )}
+          {/* Site Name */}
+          <View style={[styles.inputContainer, styles.halfWidth]}>
+            <View style={styles.inputWrapper}>
+              <Building size={20} color="#6b7280" style={styles.inputIcon} />
+              <TextInput
+                style={[styles.input, errors.site_name && styles.inputError]}
+                placeholder="Site Name"
+                value={formData.site_name}
+                onChangeText={(value) => updateFormData('site_name', value)}
+              />
+            </View>
+            {errors.site_name && (
+              <Text style={styles.errorText}>{errors.site_name}</Text>
+            )}
+          </View>
         </View>
 
         {/* City and Area Row */}
@@ -565,7 +586,7 @@ const PipelineForm = ({ setShowForm }: any) => {
             mode="dropdown"
             style={{ color: '#6b7280' }}
             placeholder="Project Type"
-            selectedValue='Branding_Only'
+            selectedValue="Branding_Only"
             onValueChange={(value) => updateFormData('project_type', value)}
           >
             <Picker.Item label="Branding Only" value="Branding_Only" />
