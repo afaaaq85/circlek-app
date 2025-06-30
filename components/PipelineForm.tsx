@@ -37,13 +37,21 @@ import * as MediaLibrary from 'expo-media-library';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
+import * as DocumentPicker from 'expo-document-picker';
+
+type CompetitionStation = {
+  company: string;
+  stationSales: string;
+  dieselSales: string;
+  gasolineSales: string;
+  comments: string;
+};
 
 const PipelineForm = ({ setShowForm }: any) => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [show, setShow] = useState(false);
   const [formData, setFormData] = useState({
-    sr_no: '',
     site_name: '',
     city: '',
     station_land: 'station',
@@ -64,13 +72,22 @@ const PipelineForm = ({ setShowForm }: any) => {
     description: '',
     is_active: true,
   });
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+  const [competitionStations, setCompetitionStations] = useState<
+    CompetitionStation[]
+  >([
+    {
+      company: '',
+      stationSales: '',
+      dieselSales: '',
+      gasolineSales: '',
+      comments: '',
+    },
+  ]);
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.sr_no.trim()) {
-      newErrors.sr_no = 'Sr No is required';
-    }
     if (!formData.site_name.trim()) {
       newErrors.site_name = 'Site name is required';
     }
@@ -200,6 +217,28 @@ const PipelineForm = ({ setShowForm }: any) => {
     ]);
   };
 
+  const handleSelectDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: [
+          'application/pdf',
+          'application/msword',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'image/jpeg',
+          'image/png',
+        ],
+        copyToCacheDirectory: true,
+        multiple: false,
+      });
+      // expo-document-picker v11+ returns assets array
+      if (result.assets && result.assets.length > 0) {
+        setSelectedDocument(result.assets[0]);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to pick document.');
+    }
+  };
+
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
@@ -207,14 +246,16 @@ const PipelineForm = ({ setShowForm }: any) => {
     try {
       // Prepare the payload with correct data types
       const payload = {
-        sr: formData.sr_no,
         site_name: formData.site_name,
         city: formData.city,
         station_or_land: formData.station_land,
         area: formData.area,
         revenue_type: formData.revenue_type,
         location_coordinates: formData.location_coordinates,
-        date_site_added: formData.date_site_added,
+        date_site_added:
+          typeof formData.date_site_added === 'string'
+            ? (formData.date_site_added as string).split('T')[0]
+            : (formData.date_site_added as Date).toISOString().split('T')[0],
         site_added_by: formData.site_added_by,
         project_type: formData.project_type,
         real_estate_team: formData.real_estate_team,
@@ -222,19 +263,25 @@ const PipelineForm = ({ setShowForm }: any) => {
         expected_gasoline_sales_lpd: 0,
         expected_diesel_sales_lpd: 0,
         expected_real_estate_revenue_sar_year: 0,
-        rental_demand: formData.rental_demand,
+        rental_demand: Number(formData.rental_demand),
         lease_tenure: formData.lease_tenure,
-        // pictures: formData.pictures,
-        pictures: 'pictures afaq nill now',
+        pictures: formData.pictures,
         stage: formData.stage,
         initial_comments: formData.initial_comments,
-        approval_status_development_team: 'processing',
-        description: 'no',
+        approval_status_development_team: 'pending',
+        description: formData.description || '',
         is_active: true,
+        competitions: competitionStations.map((station) => ({
+          company_name: station.company,
+          station_sales: Number(station.stationSales) || 0,
+          diesel_sales: Number(station.dieselSales) || 0,
+          gasoline_sales: Number(station.gasolineSales) || 0,
+          additional_comments: station.comments,
+        })),
       };
 
       const response = await axios.post(
-        `${Config.BASE_ROUTE}/pipelines/`,
+        `${Config.BASE_ROUTE}/pipelines/with-competition`,
         payload,
         {
           headers: {
@@ -244,12 +291,66 @@ const PipelineForm = ({ setShowForm }: any) => {
         }
       );
       console.log('pipeline data submitted:', response.data);
+      const pipelineId = response.data.id;
+
+      // Upload document if selected
+      if (selectedDocument && selectedDocument.uri) {
+        console.log('uplaoding doc');
+        const docFormData = new FormData();
+        docFormData.append('files', {
+          uri: selectedDocument.uri,
+          name: selectedDocument.name || 'document',
+          type: selectedDocument.mimeType || 'application/octet-stream',
+        } as any);
+        try {
+          await axios.post(
+            `${Config.BASE_ROUTE}/pipelines/${pipelineId}/upload-docs`,
+            docFormData,
+            {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
+            }
+          );
+          console.log('Document uploaded');
+        } catch (err) {
+          console.log('Document upload failed', (err as any).response?.data);
+          Alert.alert('Warning', 'Document upload failed.');
+        }
+      }
+
+      // Upload image if selected
+      if (formData.pictures) {
+        console.log('uploading pic');
+        const imgFormData = new FormData();
+        imgFormData.append('files', {
+          uri: formData.pictures,
+          name: 'image.jpg',
+          type: 'image/jpeg',
+        } as any);
+        try {
+          await axios.post(
+            `${Config.BASE_ROUTE}/pipelines/${pipelineId}/upload-images`,
+            imgFormData,
+            {
+              headers: {
+                'Content-Type': 'multipart/form-data',
+              },
+            }
+          );
+          console.log('Image uploaded');
+        } catch (err) {
+          console.log('Image upload failed', (err as any).response?.data);
+          Alert.alert('Warning', 'Image upload failed.');
+        }
+      }
+      setLoading(false);
+
       Alert.alert('Success', 'Site data submitted successfully!', [
         {
           text: 'OK',
           onPress: () => {
             setFormData({
-              sr_no:'',
               site_name: '',
               city: '',
               station_land: '',
@@ -290,6 +391,35 @@ const PipelineForm = ({ setShowForm }: any) => {
     }
   };
 
+  const handleCompetitionChange = (
+    index: number,
+    field: keyof CompetitionStation,
+    value: string
+  ) => {
+    setCompetitionStations((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  };
+
+  const addCompetitionStation = () => {
+    setCompetitionStations((prev) => [
+      ...prev,
+      {
+        company: '',
+        stationSales: '',
+        dieselSales: '',
+        gasolineSales: '',
+        comments: '',
+      },
+    ]);
+  };
+
+  const removeCompetitionStation = (index: number) => {
+    setCompetitionStations((prev) => prev.filter((_, i) => i !== index));
+  };
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.formHeader}>
@@ -305,24 +435,9 @@ const PipelineForm = ({ setShowForm }: any) => {
       <View style={styles.form}>
         <Text style={styles.formTitle}>Fuel Station Site Information</Text>
 
-        <View style={styles.row}>
-          {/* SR */}
-          <View style={[styles.inputContainer, styles.halfWidth]}>
-            <View style={styles.inputWrapper}>
-              <FileDigit size={20} color="#6b7280" style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, errors.site_name && styles.inputError]}
-                placeholder="Sr No"
-                value={formData.sr_no}
-                onChangeText={(value) => updateFormData('sr_no', value)}
-              />
-            </View>
-            {errors.site_name && (
-              <Text style={styles.errorText}>{errors.site_name}</Text>
-            )}
-          </View>
+        <View>
           {/* Site Name */}
-          <View style={[styles.inputContainer, styles.halfWidth]}>
+          <View style={styles.inputContainer}>
             <View style={styles.inputWrapper}>
               <Building size={20} color="#6b7280" style={styles.inputIcon} />
               <TextInput
@@ -399,8 +514,6 @@ const PipelineForm = ({ setShowForm }: any) => {
           >
             <Picker.Item label="Station" value="station" />
             <Picker.Item label="Land" value="land" />
-            <Picker.Item label="Commercial" value="commercial" />
-            <Picker.Item label="Residential" value="residential" />
           </Picker>
         </View>
         {errors.station_land && (
@@ -434,55 +547,38 @@ const PipelineForm = ({ setShowForm }: any) => {
             mode="dropdown"
             style={{ color: '#6b7280' }}
             placeholder="Revenue Type"
-            selectedValue="fuelonly"
+            selectedValue="fuel only"
             onValueChange={(value) => updateFormData('revenue_type', value)}
           >
-            <Picker.Item label="Fuel Only" value="fuelonly" />
-            <Picker.Item label="Fuel + Retail" value="fuelretail" />
-            <Picker.Item label="Retail Only" value="retailonly" />
+            <Picker.Item label="Fuel Only" value="fuel only" />
+            <Picker.Item label="Fuel + Retail" value="fuel & retail" />
+            <Picker.Item label="Franchise Only" value="franchise only" />
           </Picker>
         </View>
         {errors.revenue_type && (
           <Text style={styles.errorText}>{errors.revenue_type}</Text>
         )}
+        <View style={[styles.inputContainer]}>
+          <View style={styles.inputWrapper}>
+            <MapPin size={20} color="#6b7280" style={styles.inputIcon} />
+            <TextInput
+              style={[
+                styles.input,
+                errors.location_coordinates && styles.inputError,
+              ]}
+              placeholder="Coordinates"
+              value={formData.location_coordinates}
+              onChangeText={(value) =>
+                updateFormData('location_coordinates', value)
+              }
+            />
+          </View>
+          {errors.location_coordinates && (
+            <Text style={styles.errorText}>{errors.location_coordinates}</Text>
+          )}
+        </View>
 
         <View style={styles.row}>
-          {/* <View style={[styles.inputContainer, styles.halfWidth]}>
-            <View style={styles.inputWrapper}>
-              <DollarSign size={20} color="#6b7280" style={styles.inputIcon} />
-              <TextInput
-                style={[styles.input, errors.revenue_type && styles.inputError]}
-                placeholder="Revenue Type"
-                value={formData.revenue_type}
-                onChangeText={(value) => updateFormData('revenue_type', value)}
-              />
-            </View>
-            {errors.revenue_type && (
-              <Text style={styles.errorText}>{errors.revenue_type}</Text>
-            )}
-          </View> */}
-
-          <View style={[styles.inputContainer, styles.halfWidth]}>
-            <View style={styles.inputWrapper}>
-              <MapPin size={20} color="#6b7280" style={styles.inputIcon} />
-              <TextInput
-                style={[
-                  styles.input,
-                  errors.location_coordinates && styles.inputError,
-                ]}
-                placeholder="Coordinates"
-                value={formData.location_coordinates}
-                onChangeText={(value) =>
-                  updateFormData('location_coordinates', value)
-                }
-              />
-            </View>
-            {errors.location_coordinates && (
-              <Text style={styles.errorText}>
-                {errors.location_coordinates}
-              </Text>
-            )}
-          </View>
           <View style={[styles.inputContainer, styles.halfWidth]}>
             <View style={styles.inputWrapper}>
               <Settings size={20} color="#6b7280" style={styles.inputIcon} />
@@ -495,6 +591,25 @@ const PipelineForm = ({ setShowForm }: any) => {
             </View>
             {errors.stage && (
               <Text style={styles.errorText}>{errors.stage}</Text>
+            )}
+          </View>
+          <View style={[styles.inputContainer, styles.halfWidth]}>
+            <View style={styles.inputWrapper}>
+              <Users size={20} color="#6b7280" style={styles.inputIcon} />
+              <TextInput
+                style={[
+                  styles.input,
+                  errors.real_estate_team && styles.inputError,
+                ]}
+                placeholder="Team"
+                value={formData.real_estate_team}
+                onChangeText={(value) =>
+                  updateFormData('real_estate_team', value)
+                }
+              />
+            </View>
+            {errors.real_estate_team && (
+              <Text style={styles.errorText}>{errors.real_estate_team}</Text>
             )}
           </View>
         </View>
@@ -586,41 +701,21 @@ const PipelineForm = ({ setShowForm }: any) => {
             mode="dropdown"
             style={{ color: '#6b7280' }}
             placeholder="Project Type"
-            selectedValue="Branding_Only"
+            selectedValue={formData.project_type}
             onValueChange={(value) => updateFormData('project_type', value)}
           >
-            <Picker.Item label="Branding Only" value="Branding_Only" />
-            <Picker.Item label="New Construction" value="New_Construction" />
-            <Picker.Item label="Renovation" value="Renovation" />
-            <Picker.Item label="Acquisition" value="Acquisition" />
+            <Picker.Item label="Green Field" value="Green Field" />
+            <Picker.Item label="Lipstick" value="Lipstick" />
+            <Picker.Item label="KDR" value="KDR" />
+            <Picker.Item label="PKDR" value="PKDR" />
+            <Picker.Item label="Branding Only" value="Branding Only" />
+            <Picker.Item label="Revamp" value="Revamp" />
+            <Picker.Item label="Finishing only" value="Finishing only" />
           </Picker>
         </View>
         {errors.project_type && (
           <Text style={styles.errorText}>{errors.project_type}</Text>
         )}
-
-        {/* Project Type and Real Estate Team Row */}
-        <View style={styles.row}>
-          <View style={[styles.inputContainer, styles.halfWidth]}>
-            <View style={styles.inputWrapper}>
-              <Users size={20} color="#6b7280" style={styles.inputIcon} />
-              <TextInput
-                style={[
-                  styles.input,
-                  errors.real_estate_team && styles.inputError,
-                ]}
-                placeholder="Team"
-                value={formData.real_estate_team}
-                onChangeText={(value) =>
-                  updateFormData('real_estate_team', value)
-                }
-              />
-            </View>
-            {errors.real_estate_team && (
-              <Text style={styles.errorText}>{errors.real_estate_team}</Text>
-            )}
-          </View>
-        </View>
 
         {/* Traffic Count */}
         <View style={styles.inputContainer}>
@@ -682,17 +777,6 @@ const PipelineForm = ({ setShowForm }: any) => {
         </View>
 
         {/* Pictures */}
-        {/* <View style={styles.inputContainer}>
-          <View style={styles.inputWrapper}>
-            <Camera size={20} color="#6b7280" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Pictures (URLs or file paths)"
-              value={formData.pictures}
-              onChangeText={(value) => updateFormData('pictures', value)}
-            />
-          </View>
-        </View> */}
         <View style={styles.inputContainer}>
           <TouchableOpacity
             onPress={handleSelectPicture}
@@ -729,6 +813,47 @@ const PipelineForm = ({ setShowForm }: any) => {
           ) : null}
         </View>
 
+        {/* Document Upload */}
+        <View style={styles.inputContainer}>
+          <TouchableOpacity
+            onPress={handleSelectDocument}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+              backgroundColor: '#fff',
+              padding: 16,
+              borderRadius: 10,
+              borderWidth: 1,
+              borderColor: '#e5e7eb',
+              shadowColor: '#000',
+              shadowOffset: {
+                width: 0,
+                height: 1,
+              },
+              shadowOpacity: 0.05,
+              shadowRadius: 2,
+              elevation: 1,
+            }}
+          >
+            <FileDigit size={20} color="#6b7280" />
+            <Text style={{ color: '#6b7280', fontSize: 16 }}>
+              {selectedDocument ? selectedDocument.name : 'Attach other files'}
+            </Text>
+          </TouchableOpacity>
+          {selectedDocument && (
+            <View style={{ marginTop: 10 }}>
+              {/* <Text style={{ color: '#1f2937' }}>{selectedDocument.name}</Text> */}
+              {selectedDocument.mimeType &&
+              selectedDocument.mimeType.startsWith('image/') ? (
+                <Image
+                  source={{ uri: selectedDocument.uri }}
+                  style={{ width: 100, height: 100, marginTop: 5 }}
+                />
+              ) : null}
+            </View>
+          )}
+        </View>
         {/* Initial Comments */}
         <View style={styles.inputContainer}>
           <View style={styles.inputWrapper}>
@@ -746,6 +871,107 @@ const PipelineForm = ({ setShowForm }: any) => {
             />
           </View>
         </View>
+
+        {/* Competition Section */}
+        <Text
+          style={{
+            color: '#6b7280',
+            fontSize: 16,
+            marginBottom: 8,
+            marginTop: 0,
+            fontWeight: 'bold',
+          }}
+        >
+          Competition
+        </Text>
+        {competitionStations.map((station, idx) => (
+          <View
+            key={idx}
+            style={{
+              gap: 10,
+              marginBottom: 12,
+            }}
+          >
+            <View>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Company Name"
+                  value={station.company}
+                  onChangeText={(value) =>
+                    handleCompetitionChange(idx, 'company', value)
+                  }
+                />
+              </View>
+            </View>
+
+            <View style={[styles.row]}>
+              <View style={styles.halfWidth}>
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Gasoline Sales"
+                    value={station.gasolineSales}
+                    onChangeText={(value) =>
+                      handleCompetitionChange(idx, 'gasolineSales', value)
+                    }
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+              <View style={[styles.halfWidth]}>
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Station Sales"
+                    value={station.stationSales}
+                    onChangeText={(value) =>
+                      handleCompetitionChange(idx, 'stationSales', value)
+                    }
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+            </View>
+            <View style={styles.inputWrapper}>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Additional Comments"
+                value={station.comments}
+                onChangeText={(value) =>
+                  handleCompetitionChange(idx, 'comments', value)
+                }
+                multiline
+                numberOfLines={2}
+                textAlignVertical="top"
+              />
+            </View>
+
+            {competitionStations.length > 1 && (
+              <TouchableOpacity
+                onPress={() => removeCompetitionStation(idx)}
+                style={{ alignSelf: 'flex-end', marginTop: 4 }}
+              >
+                <Text style={{ color: '#DC2626', fontSize: 14 }}>Remove</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ))}
+        <TouchableOpacity
+          onPress={addCompetitionStation}
+          style={{
+            alignSelf: 'flex-start',
+            marginBottom: 16,
+            backgroundColor: '#e5e7eb',
+            paddingHorizontal: 16,
+            paddingVertical: 8,
+            borderRadius: 8,
+          }}
+        >
+          <Text style={{ color: '#1f2937', fontSize: 15 }}>
+            + Add another station
+          </Text>
+        </TouchableOpacity>
 
         <TouchableOpacity
           style={[styles.submitButton, loading && styles.submitButtonDisabled]}
@@ -898,7 +1124,7 @@ const styles = StyleSheet.create({
     width: '48%',
   },
   inputContainer: {
-    marginBottom: 20,
+    marginBottom: 12,
   },
   inputWrapper: {
     flexDirection: 'row',
